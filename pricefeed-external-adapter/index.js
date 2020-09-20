@@ -1,60 +1,115 @@
-const { Requester, Validator } = require('@chainlink/external-adapter')
+const {Requester, Validator} = require('@chainlink/external-adapter')
+const dotenv = require('dotenv');
+const Web3 = require("web3");
 
-// Define custom error scenarios for the API.
-// Return true for the adapter to retry.
+dotenv.config();
+
+
 const customError = (data) => {
   if (data.Response === 'Error') return true
   return false
 }
 
-// Define custom parameters to be used by the adapter.
-// Extra parameters can be stated in the extra object,
-// with a Boolean value indicating whether or not they
-// should be required.
+
 const customParams = {
-  base: ['base', 'from', 'coin'],
-  quote: ['quote', 'to', 'market'],
-  endpoint: false
+  pricePair: ['pair', 'price', 'pricePair'],
+  network: false,
+  priceFeed: false,
 }
+
+function getPriceFeedContractFromPricePair(pricePair) {
+  // TODO
+  return '0x9326BFA02ADD2366b30bacB125260Af641031331'; // ETH/USD on Kovan for testing purpose
+}
+
+function getDefaultNetwork() {
+  return  process.env.PRICE_FEED_DEFAULT_NETWORK || 'kovan'
+}
+
 
 const createRequest = (input, callback) => {
-  // The Validator helps you validate the Chainlink request data
+
   const validator = new Validator(callback, input, customParams)
   const jobRunID = validator.validated.id
-  const endpoint = validator.validated.data.endpoint || 'price'
-  const url = `https://min-api.cryptocompare.com/data/${endpoint}`
-  const fsym = validator.validated.data.base.toUpperCase()
-  const tsyms = validator.validated.data.quote.toUpperCase()
+  const infuraProjectKey =  process.env.INFURA_PROJECT_KEY
+  const pricePair = validator.validated.data.pricePair;
+  const network = validator.validated.data.network || getDefaultNetwork();
+  const priceFeedContract = validator.validated.data.priceFeed || getPriceFeedContractFromPricePair(pricePair);
 
-  const params = {
-    fsym,
-    tsyms
-  }
-
-  // This is where you would add method and headers
-  // you can add method like GET or POST and add it to the config
-  // The default is GET requests
-  // method = 'get' 
-  // headers = 'headers.....'
-  const config = {
-    url,
-    params
-  }
-
-  // The Requester allows API calls be retry in case of timeout
-  // or connection failure
-  Requester.request(config, customError)
-    .then(response => {
-      // It's common practice to store the desired value at the top-level
-      // result key. This allows different adapters to be compatible with
-      // one another.
-      response.data.result = Requester.validateResultNumber(response.data, [tsyms])
-      callback(response.status, Requester.success(jobRunID, response))
-    })
-    .catch(error => {
-      callback(500, Requester.errored(jobRunID, error))
-    })
+  const priceFeed = getPriceFeed(network, infuraProjectKey, priceFeedContract);
+  priceFeed.methods.latestRoundData().call()
+      .then((roundData) => {
+        console.log("Latest Round Data", roundData)
+        roundData.result = roundData.answer
+        roundData.pricePair = pricePair
+        roundData.network = network
+        roundData.priceFeedContract = priceFeedContract
+        const response = {
+          jobRunID: jobRunID,
+          data: roundData,
+          result: roundData.answer,
+          statusCode: 200
+        }
+        callback(200, response);
+      })
+      .catch(error => {
+        callback(500, Requester.errored(jobRunID, error))
+      })
+  ;
 }
+
+function getPriceFeed(network, infuraProjectKey, priceFeedContract) {
+  const web3 = new Web3("https://" + network + ".infura.io/v3/" + infuraProjectKey);
+  const aggregatorV3InterfaceABI = [{
+    "inputs": [],
+    "name": "decimals",
+    "outputs": [{"internalType": "uint8", "name": "", "type": "uint8"}],
+    "stateMutability": "view",
+    "type": "function"
+  }, {
+    "inputs": [],
+    "name": "description",
+    "outputs": [{"internalType": "string", "name": "", "type": "string"}],
+    "stateMutability": "view",
+    "type": "function"
+  }, {
+    "inputs": [{"internalType": "uint80", "name": "_roundId", "type": "uint80"}],
+    "name": "getRoundData",
+    "outputs": [{"internalType": "uint80", "name": "roundId", "type": "uint80"}, {
+      "internalType": "int256",
+      "name": "answer",
+      "type": "int256"
+    }, {"internalType": "uint256", "name": "startedAt", "type": "uint256"}, {
+      "internalType": "uint256",
+      "name": "updatedAt",
+      "type": "uint256"
+    }, {"internalType": "uint80", "name": "answeredInRound", "type": "uint80"}],
+    "stateMutability": "view",
+    "type": "function"
+  }, {
+    "inputs": [],
+    "name": "latestRoundData",
+    "outputs": [{"internalType": "uint80", "name": "roundId", "type": "uint80"}, {
+      "internalType": "int256",
+      "name": "answer",
+      "type": "int256"
+    }, {"internalType": "uint256", "name": "startedAt", "type": "uint256"}, {
+      "internalType": "uint256",
+      "name": "updatedAt",
+      "type": "uint256"
+    }, {"internalType": "uint80", "name": "answeredInRound", "type": "uint80"}],
+    "stateMutability": "view",
+    "type": "function"
+  }, {
+    "inputs": [],
+    "name": "version",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  }];
+  return new web3.eth.Contract(aggregatorV3InterfaceABI, priceFeedContract);
+}
+
 
 // This is a wrapper to allow the function to work with
 // GCP Functions
