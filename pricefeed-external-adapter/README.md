@@ -1,44 +1,44 @@
-# Chainlink NodeJS External Adapter Template
+# Chainlink Price Feeds External Adapter 
 
-This template provides a basic framework for developing Chainlink external adapters in NodeJS. Comments are included to assist with development and testing of the external adapter. Once the API-specific values (like query parameters and API key authentication) have been added to the adapter, it is very easy to add some tests to verify that the data will be correctly formatted when returned to the Chainlink node. There is no need to use any additional frameworks or to run a Chainlink node in order to test the adapter.
+This External Adapter connect [Chainlink Price Feeds](https://feeds.chain.link/) to Chainlink Jobs.
 
-## Creating your own adapter from this template
-
-Clone this repo and change "ExternalAdapterProject" below to the name of your project
-
-```bash
-git clone https://github.com/thodges-gh/CL-EA-NodeJS-Template.git ExternalAdapterProject
-```
-
-Enter into the newly-created directory
-
-```bash
-cd ExternalAdapterProject
-```
-
-You can remove the existing git history by running:
-
-```bash
-rm -rf .git
-```
-
-See [Install Locally](#install-locally) for a quickstart
+It should be used with External Initiator other than from the Ethereum Blockchain (as Price feeds are already [available in contracts](https://docs.chain.link/docs/get-the-latest-price))
 
 ## Input Params
 
-- `base`, `from`, or `coin`: The symbol of the currency to query
-- `quote`, `to`, or `market`: The symbol of the currency to convert to
+- `pair`, `price`, `pricePair`: The currency pair to query (Not used at this time)
+- `network`, `chain`: The network to use (`mainnet`, `kovan`, `rinkeby`, `ropsten`)
+- `priceFeed`, `contract`, `priceFeedContract` : the currency pair contract, as defined at https://docs.chain.link/docs/reference-contracts
 
+```json
+{
+    "id": 0,
+    "data": {
+        "pair": "ETH/USD",
+        "network": "kovan",
+        "priceFeed": "0x9326BFA02ADD2366b30bacB125260Af641031331"
+    }
+}
+```
 ## Output
 
 ```json
 {
- "jobRunID": "278c97ffadb54a5bbb93cfec5f7b5503",
- "data": {
-  "USD": 164.02,
-  "result": 164.02
- },
- "statusCode": 200
+    "jobRunID": 777,
+    "data": {
+        "0": "18446744073709562742",
+        "1": "38098000000",
+        "2": "1600581628",
+        "3": "1600581628",
+        "4": "18446744073709562742",
+        "roundId": "18446744073709562742",
+        "answer": "38098000000",
+        "result": "38098000000",
+        "startedAt": "1600581628",
+        "updatedAt": "1600581628",
+        "answeredInRound": "18446744073709562742"
+    },
+    "statusCode": 200
 }
 ```
 
@@ -69,7 +69,7 @@ yarn start
 ## Call the external adapter/API server
 
 ```bash
-curl -X POST -H "content-type:application/json" "http://localhost:8080/" --data '{ "id": 0, "data": { "from": "ETH", "to": "USD" } }'
+curl -X POST -H "content-type:application/json" "http://localhost:8080/" --data '{ "id": 0, "data": { "pair": "ETH/USD","network": "kovan","priceFeed": "0x9326BFA02ADD2366b30bacB125260Af641031331" } }'
 ```
 
 ## Docker
