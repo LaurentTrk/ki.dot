@@ -9,6 +9,6 @@ data_sources:
   - name: Chainlink Price Feeds
     url: https://feeds.chain.link/
 parameters:
-  - pricePair (ETH/USD)
-  - network (Optional)
-  - priceFeed (Optional, see https://docs.chain.link/docs/reference-contracts)
+  - pricePair
+  - network
+  - priceFeed
