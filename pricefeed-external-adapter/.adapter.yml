@@ -5,6 +5,9 @@ platforms:
   - Docker
   - AWS Lambda
   - GCP Functions
+data_sources:
+  - name: Chainlink Feeds
+    url: https://feeds.chain.link/
 parameters:
   - pricePair
   - network
