@@ -1,5 +1,5 @@
 name: Chainlink Price Feed Adapter
-description: Get Price Reference Data from https://feeds.chain.link/.
+description: Get Price Reference Data from feeds.chain.link.
 node_identifier: pricefeed-ea
 platforms:
   - Docker
