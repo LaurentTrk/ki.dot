@@ -1,5 +1,5 @@
 name: Chainlink Price Feed External Adapter
-description: Get Price Reference Data from https://feeds.chain.link/.
+description: Get Price Reference Data from Chainlink Feeds
 node_identifier: pricefeed-ea
 platforms:
   - Docker
