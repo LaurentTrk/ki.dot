@@ -1,14 +1,13 @@
-name: Chainlink Price Feed External Adapter
-description: Get Price Reference Data from Chainlink Feeds
-node_identifier: pricefeed-ea
+name: Example
+description: An example adapter that does something.
+node_identifier: example
 platforms:
   - Docker
   - AWS Lambda
   - GCP Functions
 data_sources:
-  - name: Chainlink Price Feeds
-    url: https://feeds.chain.link/
+  - name: Example
+    url: https://example.com
 parameters:
-  - pricePair
-  - network
-  - priceFeed
+  - base
+  - quote
