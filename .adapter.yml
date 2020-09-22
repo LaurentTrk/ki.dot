@@ -1,0 +1,11 @@
+name: Chainlink Price Feed External Adapter
+description: Get Price Reference Data from https://feeds.chain.link/.
+node_identifier: pricefeed-ea
+platforms:
+  - Docker
+  - AWS Lambda
+  - GCP Functions
+parameters:
+  - pricePair (ETH/USD)
+  - network (Optional)
+  - priceFeed (Optional, see https://docs.chain.link/docs/reference-contracts)
