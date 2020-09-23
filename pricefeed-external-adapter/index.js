@@ -1,6 +1,7 @@
 const {Requester, Validator} = require('@chainlink/external-adapter')
 const dotenv = require('dotenv');
 const Web3 = require("web3");
+const pricePairs = require('./pricePairs').pricePairs;
 
 dotenv.config();
 
@@ -17,13 +18,17 @@ const customParams = {
   priceFeed: false,
 }
 
-function getPriceFeedContractFromPricePair(pricePair) {
-  // TODO
-  return '0x9326BFA02ADD2366b30bacB125260Af641031331'; // ETH/USD on Kovan for testing purpose
+function getPriceFeedContractFromPricePair(pricePair, network) {
+  if (network in pricePairs){
+    if (pricePair in pricePairs[network]){
+      return pricePairs[network][pricePair];
+    }
+  }
+  return '';
 }
 
 function getDefaultNetwork() {
-  return  process.env.PRICE_FEED_DEFAULT_NETWORK || 'kovan'
+  return  process.env.PRICE_FEED_DEFAULT_NETWORK || 'mainnet'
 }
 
 
@@ -32,9 +37,15 @@ const createRequest = (input, callback) => {
   const validator = new Validator(callback, input, customParams)
   const jobRunID = validator.validated.id
   const infuraProjectKey =  process.env.INFURA_PROJECT_KEY
-  const pricePair = validator.validated.data.pricePair;
-  const network = validator.validated.data.network || getDefaultNetwork();
-  const priceFeedContract = validator.validated.data.priceFeed || getPriceFeedContractFromPricePair(pricePair);
+  const pricePair = validator.validated.data.pricePair
+  const network = validator.validated.data.network || getDefaultNetwork()
+  const priceFeedContract = validator.validated.data.priceFeed || getPriceFeedContractFromPricePair(pricePair, network)
+
+  if (priceFeedContract === ''){
+    const errorMessage = "Unknown price pair " + pricePair + ' at ' + network
+    console.error(errorMessage)
+    callback(500, Requester.errored(jobRunID, errorMessage))
+  }
 
   const priceFeed = getPriceFeed(network, infuraProjectKey, priceFeedContract);
   priceFeed.methods.latestRoundData().call()
