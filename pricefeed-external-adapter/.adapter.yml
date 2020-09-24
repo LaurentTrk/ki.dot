@@ -1,6 +1,6 @@
 name: Chainlink Price Feed Adapter
 description: Price Feeds from Chainlink
-node_identifier: pricefeed-ea
+node_identifier: pricefeed
 platforms:
   - Docker
   - AWS Lambda
