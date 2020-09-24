@@ -1,13 +1,8 @@
-name: Example
-description: An example adapter that does something.
-node_identifier: modified
+name: Chainlink Ki.Dot Adapter
+description: Chainlink Adapter to Ki.Dot
+node_identifier: kidot
 platforms:
   - Docker
   - AWS Lambda
   - GCP Functions
-data_sources:
-  - name: Example
-    url: https://example.com
-parameters:
-  - base
-  - quote
+
