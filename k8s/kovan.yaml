@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kovan-chainlink-deployment
+  labels:
+    app: kovan-chainlink-node
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kovan-chainlink-node
+  template:
+    metadata:
+      labels:
+        app: kovan-chainlink-node
+    spec:
+      containers:
+        - name: kovan-chainlink
+          image: smartcontract/chainlink:latest
+          args: ["local", "n", "-p",  "/chainlink/.password", "-a", "/chainlink/.api"]
+          envFrom:
+          - configMapRef:
+              name: kovan-env
+          ports:
+          - containerPort: 6688
+          volumeMounts:
+            - name: api-volume
+              mountPath: /chainlink/.api
+              subPath: .api
+            - name: password-volume
+              mountPath: /chainlink/.password
+              subPath: .password
+      volumes:
+        - name: api-volume
+          secret:
+            secretName: api-env
+        - name: password-volume
+          secret:
+            secretName: password-env

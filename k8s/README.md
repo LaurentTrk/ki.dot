@@ -1,5 +1,19 @@
 ** Work in progress **
+
+See [Running Chainlink Nodes on Kubernetes and the Google Cloud Platform](https://medium.com/secure-data-links/running-chainlink-nodes-on-kubernetes-and-the-google-cloud-platform-1fab922b3a1a)
+
+
 ```shell script
+
+# Chainlink Node on kovan
+echo "user@example.com" > .api
+echo "password" > .api
+echo "my_wallet_password" > .password
+kubectl create secret generic api-env --from-file=.api
+kubectl create secret generic password-env --from-file=.password
+kubectl apply -f kovan.yaml
+kubectl expose deployment kovan-chainlink-deployment --port=6688 --target-port=6688
+
 
 # Ki.Dot Initiator, send Substrate Request to Chainlink node
 # Deploy kidot-initiator
