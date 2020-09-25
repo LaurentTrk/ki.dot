@@ -23,6 +23,7 @@ use sp_version::RuntimeVersion;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 
+
 // A few exports that help ease life for downstream crates.
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -37,9 +38,12 @@ pub use frame_support::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 	},
 };
+pub use pricefeed::Call as PriceFeedCall;
 
-/// Import the template pallet.
-pub use template;
+pub use pricefeed;
+pub use chainlink;
+pub use kidot_token;
+pub use kidot_loan;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -92,8 +96,8 @@ pub mod opaque {
 }
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("node-template"),
-	impl_name: create_runtime_str!("node-template"),
+	spec_name: create_runtime_str!("kidot-substrate-node"),
+	impl_name: create_runtime_str!("kidot-substrate-node"),
 	authoring_version: 1,
 	spec_version: 1,
 	impl_version: 1,
@@ -257,9 +261,34 @@ impl pallet_sudo::Trait for Runtime {
 	type Call = Call;
 }
 
-/// Configure the pallet template in pallets/template.
-impl template::Trait for Runtime {
+impl pricefeed::Trait for Runtime {
 	type Event = Event;
+	type Callback = PriceFeedCall<Runtime>;
+	type OracleJobId = PriceFeedOracleJobId;
+	type OracleAccountId = PriceFeedOracleAccountId;
+}
+
+impl chainlink::Trait for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type Callback = PriceFeedCall<Runtime>;
+	type ValidityPeriod = ValidityPeriod;
+}
+
+impl kidot_token::Trait for Runtime {
+	type Event = Event;
+}
+
+impl kidot_loan::Trait for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+}
+
+parameter_types! {
+	pub const ValidityPeriod: u32 = 50;
+	// pub const PriceFeedOracleJobId: &'static str = &"74e47e659f5d4e68b0a60364a1aca46a";
+	pub const PriceFeedOracleJobId: &'static str = &"4cc9be73ee6b45c0bcd2ac96c281ccc0";
+	pub PriceFeedOracleAccountId: AccountId = hex_literal::hex!("7c522c8273973e7bcf4a5dbfcc745dba4a3ab08c1e410167d7b1bdf9cb924f6c").into();
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -277,8 +306,11 @@ construct_runtime!(
 		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Module, Storage},
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
-		// Include the custom logic from the template pallet in the runtime.
-		TemplateModule: template::{Module, Call, Storage, Event<T>},
+		// Declare the chainlink pallet
+		Chainlink: chainlink::{Module, Call, Storage, Event<T>},
+		Pricefeed: pricefeed::{Module, Call, Storage},
+		KidotToken: kidot_token::{Module, Call, Storage, Event<T>},
+		KidotLoan: kidot_loan::{Module, Call, Storage, Event<T>},
 	}
 );
 
@@ -423,7 +455,7 @@ impl_runtime_apis! {
 			None
 		}
 	}
-	
+
 	impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Index> for Runtime {
 		fn account_nonce(account: AccountId) -> Index {
 			System::account_nonce(account)
