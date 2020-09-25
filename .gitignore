@@ -1,0 +1,6 @@
+/pallet-chainlink/target/
+/pallet-chainlink/Cargo.lock
+/pallet-chainlink-pricefeed/target/
+/pallet-chainlink-pricefeed/Cargo.lock
+/k8s/kidot-initiator.env
+/k8s/kidot-adapter.env
