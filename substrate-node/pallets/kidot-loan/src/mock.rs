@@ -43,19 +43,49 @@ impl system::Trait for Test {
 	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
 	type ModuleToIndex = ();
-	type AccountData = ();
+	type AccountData = balances::AccountData<u64>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
 }
 
-impl Trait for Test {
+parameter_types! {
+		pub const ExistentialDeposit: u64 = 100;
+		pub const TransferFee: u64 = 0;
+		pub const CreationFee: u64 = 0;
+	}
+
+impl balances::Trait for Test {
+	type Balance = u64;
 	type Event = ();
+	type DustRemoval = ();
+	type ExistentialDeposit = ExistentialDeposit;
+	type AccountStore = system::Module<Test>;
+	type WeightInfo = ();
 }
 
-pub type TemplateModule = Module<Test>;
+
+impl Trait for Test {
+	type Event = ();
+	type Currency = balances::Module<Test>;
+}
+
+pub type System = system::Module<Test>;
+pub type KidotLoanModule = Module<Test>;
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+//	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	let mut t = system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap();
+	balances::GenesisConfig::<Test> {
+		// Provide some initial balances
+		balances: vec![(1, 10000), (2, 11000), (3, 12000), (4, 13000), (5, 14000)],
+	}
+		.assimilate_storage(&mut t)
+		.unwrap();
+	let mut ext: sp_io::TestExternalities = t.into();
+	ext.execute_with(|| System::set_block_number(1));
+	ext
 }
