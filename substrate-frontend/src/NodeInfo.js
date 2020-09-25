@@ -32,9 +32,9 @@ function Main (props) {
             <span>{nodeInfo.chain}</span>
           </Card.Meta>
           <Card.Description>
-            Built using the{' '}
-            <a href='https://github.com/substrate-developer-hub/substrate-front-end-template'>
-              Substrate Front End Template
+            Ki.Dot Node built using this{' '}
+            <a href='https://github.com/LaurentTrk/ki.dot'>
+              repository
             </a>
           </Card.Description>
         </Card.Content>
