@@ -7,7 +7,6 @@ use sp_std::prelude::*;
 use frame_system::ensure_root;
 use log::info;
 use frame_support::traits::Get;
-use sp_std::str;
 
 #[cfg(test)]
 mod mock;
@@ -25,7 +24,7 @@ pub trait Trait: ChainlinkTrait {
 	/// The JobId on the Oracle which trigger calls to the Price Feed Adapter
 	type OracleJobId: Get<Vec<u8>>;
 	/// The AccountId set in the Oracle Job Initiator
-	type OracleAccountId: Get<Vec<u8>>;
+	type OracleAccountId: Get<Self::AccountId>;
 }
 
 decl_storage! {
@@ -42,16 +41,18 @@ decl_module! {
 
 		// Chainlink Oracle JobId and AccountId configurable constants
         const OracleJobId: Vec<u8> = T::OracleJobId::get();
-        const OracleAccountId: Vec<u8> = T::OracleAccountId::get();
+        const OracleAccountId: T::AccountId = T::OracleAccountId::get();
 
 		#[weight = 0]
-        pub fn request_price(origin, operator: T::AccountId, price_pair: Vec<u8>) -> DispatchResult {
-			// TODO : Use configuration accountId and remove the need to pass it in this call
-			info!("Request Price for {:?}", str::from_utf8(&price_pair));
+        pub fn request_price(origin, price_pair: Vec<u8>) -> DispatchResult {
+			// info!("Request Price for {:?}", str::from_utf8(&price_pair));
+			info!("Request Price for {:?} using {:?}", price_pair, T::OracleJobId::get());
             let parameters = ("pricePair", price_pair);
             let call: <T as Trait>::Callback = Call::callback(vec![]).into();
+
+
 			info!("Calling initiate_request");
-            <chainlink::Module<T>>::initiate_request(origin, operator, T::OracleJobId::get(), 0, parameters.encode(), 100, call.into())?;
+			<chainlink::Module<T>>::initiate_request(origin, T::OracleAccountId::get(), T::OracleJobId::get(), 0, parameters.encode(), 100, call.into())?;
 
             Ok(())
         }
