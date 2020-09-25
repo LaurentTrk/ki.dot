@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: kidot-chainlink-adapter
+  name: kidot-chainlink-adapter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kidot-chainlink-adapter
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: kidot-chainlink-adapter
+    spec:
+      containers:
+      - image: laurenttrk/substrate-adapter:2.0.0-alpha.6.5
+        name: substrate-adapter
+        resources: {}
+        envFrom:
+        - configMapRef:
+            name: kidot-adapter
+status: {}
