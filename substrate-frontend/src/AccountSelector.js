@@ -8,10 +8,19 @@ import {
   Container,
   Icon,
   Image,
-  Label
+  Label, Segment
 } from 'semantic-ui-react';
 
 import { useSubstrate } from './substrate-lib';
+import {Link} from "react-router-dom";
+
+function ConditionalMenuItem(props){
+  return <Menu.Item as={props.currentTab !== props.tab ? Link:'a' }
+                    to={props.link}
+                    active={props.currentTab === props.tab}>
+    {props.tab}
+  </Menu.Item>
+}
 
 function Main (props) {
   const { keyring } = useSubstrate();
@@ -53,9 +62,25 @@ function Main (props) {
       }}
     >
       <Container>
-        <Menu.Menu>
-          <Image src={`${process.env.PUBLIC_URL}/assets/substrate-logo.png`} size='mini' />
-        </Menu.Menu>
+        <Menu  inverted={false}  pointing={false} secondary={true} size='large'  >
+          <Container>
+            <ConditionalMenuItem currentTab={props.currentTab} tab='Home' link='/'/>
+            <ConditionalMenuItem currentTab={props.currentTab} tab='Loans' link='/loans'/>
+            <ConditionalMenuItem currentTab={props.currentTab} tab='Prices' link='/prices'/>
+            <ConditionalMenuItem currentTab={props.currentTab} tab='Dashboard' link='/dashboard'/>
+            <Dropdown item text='External'>
+              <Dropdown.Menu>
+                <Dropdown.Item href="https://kiva.org/" target="_blank">Kiva</Dropdown.Item>
+                <Dropdown.Item href="https://hack.chain.link/" target="_blank">Chainlink Hackathon</Dropdown.Item>
+                <Dropdown.Item href="https://feeds.chain.link/" target="_blank">Chainlink Price Feeds</Dropdown.Item>
+                <Dropdown.Item href="https://substrate.dev" target="_blank">Substrate</Dropdown.Item>
+                <Dropdown.Item href="https://parity.io" target="_blank">Parity</Dropdown.Item>
+                <Dropdown.Item href="https://chain.link/" target="_blank">Chainlink</Dropdown.Item>
+                <Dropdown.Item href="https://www.linkedin.com/in/laurenttrk" target="_blank">About Me</Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
+          </Container>
+        </Menu>
         <Menu.Menu position='right' style={{ alignItems: 'center' }}>
           { !accountSelected
             ? <span>
@@ -108,7 +133,7 @@ function BalanceAnnotation (props) {
     // If the user has selected an address, create a new subscription
     accountSelected &&
       api.query.system.account(accountSelected, balance => {
-        setAccountBalance(balance.data.free.toHuman());
+        setAccountBalance(balance.data.free.toHuman().replace('Unit','KD$'));
       })
         .then(unsub => {
           unsubscribe = unsub;
@@ -120,7 +145,7 @@ function BalanceAnnotation (props) {
 
   return accountSelected ? (
     <Label pointing='left'>
-      <Icon name='money' color='green' />
+      <Icon name='money bill alternate outline' color='green' />
       {accountBalance}
     </Label>
   ) : null;

@@ -53,43 +53,13 @@ function Main () {
 
   return (
     <div ref={contextRef}>
-      <Segment inverted={true} textAlign='center' style={{minHeight: 50, padding: '1em 0em'}} vertical>
-        <Menu  fixed={'top'} inverted={true}  pointing={false} secondary={true} size='large'  >
-          <Container>
-            <Menu.Item as={Link} to='/'>Home</Menu.Item>
-            <Menu.Item as='a' active>Loans</Menu.Item>
-            <Menu.Item as={Link} to='/prices'>Price Feeds</Menu.Item>
-            <Menu.Item as={Link} to='/dashboard'>Dashboard</Menu.Item>
-            <Dropdown item text='External'>
-              <Dropdown.Menu>
-                <Dropdown.Item href="https://hack.chain.link/" target="_blank">Chainlink Hackathon
-                </Dropdown.Item>
-                <Dropdown.Item href="https://feeds.chain.link/" target="_blank">Chainlink Price Feeds
-                </Dropdown.Item>
-                <Dropdown.Item href="https://substrate.dev" target="_blank">Substrate</Dropdown.Item>
-                <Dropdown.Item href="https://parity.io" target="_blank">Parity</Dropdown.Item>
-                <Dropdown.Item href="https://chain.link/" target="_blank">Chainlink</Dropdown.Item>
-                <Dropdown.Item href="https://www.linkedin.com/in/laurenttrk" target="_blank">About Me
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
-          </Container>
-        </Menu>
-      </Segment>
       <Sticky context={contextRef}>
-        <AccountSelector setAccountAddress={setAccountAddress} />
+        <AccountSelector setAccountAddress={setAccountAddress} currentTab={'Loans'}/>
       </Sticky>
       <Container>
         <Grid stackable columns='equal'>
           <Grid.Row>
             <Loans accountPair={accountPair} />
-          </Grid.Row>
-          <Grid.Row>
-            <Transfer accountPair={accountPair} />
-          </Grid.Row>
-          <Grid.Row>
-            <Interactor accountPair={accountPair} />
-            <Events />
           </Grid.Row>
         </Grid>
       </Container>
