@@ -13,9 +13,9 @@ version = '2.0.0-rc6'
 targets = ['x86_64-unknown-linux-gnu']
 
 [[bin]]
-name = 'node-template'
+name = 'kidot-substrate-node'
 
-[dependencies.node-template-runtime]
+[dependencies.kidot-substrate-runtime]
 path = '../runtime'
 version = '2.0.0-rc6'
 

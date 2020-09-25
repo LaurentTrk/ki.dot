@@ -24,7 +24,7 @@ use crate::service::new_partial;
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Substrate Node".into()
+		"Ki.Dot Substrate Node".into()
 	}
 
 	fn impl_version() -> String {
@@ -58,7 +58,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&node_template_runtime::VERSION
+		&kidot_substrate_runtime::VERSION
 	}
 }
 
