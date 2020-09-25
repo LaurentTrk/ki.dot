@@ -4,7 +4,7 @@ use chainlink::{CallbackWithParameter, Event, Trait as ChainlinkTrait};
 use codec::{Decode, Encode};
 use frame_support::{decl_module, decl_storage, dispatch::DispatchResult};
 use sp_std::prelude::*;
-use frame_system::ensure_root;
+use frame_system::{ensure_root, ensure_signed};
 use log::info;
 use frame_support::traits::Get;
 
@@ -20,17 +20,18 @@ pub trait Trait: ChainlinkTrait {
 
 	/// We need to provide our callback to Chainlink pallet
 	type Callback: From<Call<Self>> + Into<<Self as ChainlinkTrait>::Callback>;
-
-	/// The JobId on the Oracle which trigger calls to the Price Feed Adapter
-	type OracleJobId: Get<Vec<u8>>;
-	/// The AccountId set in the Oracle Job Initiator
-	type OracleAccountId: Get<Self::AccountId>;
 }
 
 decl_storage! {
     trait Store for Module<T: Trait> as PriceFeedStorage {
+    	/// Store the latest price pair requested
+        pub PricePair: Vec<u8>;
     	/// Store the price value received from Chainlink
         pub Price: i128;
+		/// The JobId on the Oracle which trigger calls to the Price Feed Adapter
+		pub OracleJobId: Vec<u8>;
+		/// The AccountId set in the Oracle Job Initiator
+		pub OracleAccountId: T::AccountId;
     }
 }
 
@@ -39,20 +40,26 @@ decl_module! {
 		// Events must be initialized if they are used by the pallet.
 		fn deposit_event() = default;
 
-		// Chainlink Oracle JobId and AccountId configurable constants
-        const OracleJobId: Vec<u8> = T::OracleJobId::get();
-        const OracleAccountId: T::AccountId = T::OracleAccountId::get();
+		#[weight = 0]
+        pub fn set_oracle_configuration(origin, account_id: T::AccountId, job_id: Vec<u8>) -> DispatchResult {
+			ensure_root(origin)?;
+			<OracleJobId>::put(job_id);
+			<OracleAccountId<T>>::put(account_id);
+            Ok(())
+        }
+
 
 		#[weight = 0]
         pub fn request_price(origin, price_pair: Vec<u8>) -> DispatchResult {
-			// info!("Request Price for {:?}", str::from_utf8(&price_pair));
-			info!("Request Price for {:?} using {:?}", price_pair, T::OracleJobId::get());
-            let parameters = ("pricePair", price_pair);
+
+			info!("Request Price for {:?} using {:?}", price_pair.clone(), <OracleJobId>::get());
+			ensure_signed(origin.clone())?;
+            let parameters = ("pricePair", price_pair.clone());
             let call: <T as Trait>::Callback = Call::callback(vec![]).into();
 
-
 			info!("Calling initiate_request");
-			<chainlink::Module<T>>::initiate_request(origin, T::OracleAccountId::get(), T::OracleJobId::get(), 0, parameters.encode(), 100, call.into())?;
+			<PricePair>::put(price_pair);
+			<chainlink::Module<T>>::initiate_request(origin, <OracleAccountId<T>>::get(), <OracleJobId>::get(), 0, parameters.encode(), 100, call.into())?;
 
             Ok(())
         }

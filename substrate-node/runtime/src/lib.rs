@@ -263,8 +263,6 @@ impl pallet_sudo::Trait for Runtime {
 impl pricefeed::Trait for Runtime {
 	type Event = Event;
 	type Callback = PriceFeedCall<Runtime>;
-	type OracleJobId = PriceFeedOracleJobId;
-	type OracleAccountId = PriceFeedOracleAccountId;
 }
 
 impl chainlink::Trait for Runtime {
@@ -281,9 +279,6 @@ impl kidot_loan::Trait for Runtime {
 
 parameter_types! {
 	pub const ValidityPeriod: u32 = 50;
-	// pub const PriceFeedOracleJobId: &'static str = &"74e47e659f5d4e68b0a60364a1aca46a";
-	pub const PriceFeedOracleJobId: &'static str = &"4cc9be73ee6b45c0bcd2ac96c281ccc0";
-	pub PriceFeedOracleAccountId: AccountId = hex_literal::hex!("7c522c8273973e7bcf4a5dbfcc745dba4a3ab08c1e410167d7b1bdf9cb924f6c").into();
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
