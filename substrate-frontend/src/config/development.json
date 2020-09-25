@@ -13,5 +13,5 @@
       "fundedAmount": "AmountLended"
     }
   },
-  "PROVIDER_SOCKET": "ws://127.0.0.1.9944"
+  "PROVIDER_SOCKET": "ws://127.0.0.1:9944"
 }
