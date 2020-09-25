@@ -22,6 +22,15 @@ function Main (props) {
   // The currently stored value
   const [currentValue, setCurrentValue] = useState(0);
   const [pricePair, setPricePair] = useState(0);
+  const [latestPricePair, setLatestPricePair] = useState(0);
+
+  const  bin2String = (array) => {
+        var result = "";
+        for (var i = 0; i < array.length; i++) {
+            result += String.fromCharCode(parseInt(array[i], 2));
+        }
+        return result;
+    }
 
   useEffect(() => {
     let unsubscribe;
@@ -42,8 +51,12 @@ function Main (props) {
       }
     }).then(unsub => {
       unsubscribe = unsub;
-    })
-        .catch(console.error);
+    }).catch(console.error);
+      api.query.pricefeed.pricePair(pricePair => {
+          setLatestPricePair(pricePair.toHuman());
+      }).then(unsub => {
+          unsubscribe = unsub;
+      }).catch(console.error);
 
     return () => unsubscribe && unsubscribe();
   }, [api.query.pricefeed]);
@@ -54,7 +67,7 @@ function Main (props) {
         <Card centered>
           <Card.Content textAlign='center'>
             <Statistic
-                label={pricePair}
+                label={latestPricePair}
                 value={currentValue}
             />
           </Card.Content>
