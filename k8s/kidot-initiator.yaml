@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: kidot-chainlink-initiator
+  name: kidot-chainlink-initiator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kidot-chainlink-initiator
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: kidot-chainlink-initiator
+    spec:
+      containers:
+      - image: laurenttrk/external-initiator:2.0.0-alpha.6.4
+        name: external-initiator
+        args: ['{"name":"kidot-ei","type":"substrate","url":"wss://your-substrate-url:9944"}']
+        resources: {}
+        envFrom:
+        - configMapRef:
+            name: kidot-initiator
+status: {}
