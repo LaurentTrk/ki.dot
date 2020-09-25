@@ -7,6 +7,7 @@ See [Substrate Front End Template](https://github.com/substrate-developer-hub/su
 Be sure to have the correct value for `PROVIDER_SOCKET` in the file [production.json](./src/config/production.json).
 
 ```bash
+yarn install
 docker build . -t laurenttrk/kidot-frontend:dev
 docker push laurenttrk/kidot-frontend:dev
 ```
