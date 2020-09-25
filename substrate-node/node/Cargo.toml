@@ -1,12 +1,12 @@
 [package]
-authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
+authors = ['l.tk <https://github.com/LaurentTrk>']
 build = 'build.rs'
-description = 'A fresh FRAME-based Substrate node, ready for hacking.'
+description = 'Ki.Dot Substrate Node'
 edition = '2018'
-homepage = 'https://substrate.dev'
+homepage = 'https://ki.dot.ltk.codes'
 license = 'Unlicense'
-name = 'node-template'
-repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
+name = 'kidot-substrate-node'
+repository = 'https://github.com/LaurentTrk/ki.dot/'
 version = '2.0.0-rc6'
 
 [package.metadata.docs.rs]
