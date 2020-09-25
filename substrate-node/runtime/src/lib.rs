@@ -42,7 +42,6 @@ pub use pricefeed::Call as PriceFeedCall;
 
 pub use pricefeed;
 pub use chainlink;
-pub use kidot_token;
 pub use kidot_loan;
 
 /// An index to a block.
@@ -275,10 +274,6 @@ impl chainlink::Trait for Runtime {
 	type ValidityPeriod = ValidityPeriod;
 }
 
-impl kidot_token::Trait for Runtime {
-	type Event = Event;
-}
-
 impl kidot_loan::Trait for Runtime {
 	type Event = Event;
 	type Currency = Balances;
@@ -309,7 +304,6 @@ construct_runtime!(
 		// Declare the chainlink pallet
 		Chainlink: chainlink::{Module, Call, Storage, Event<T>},
 		Pricefeed: pricefeed::{Module, Call, Storage},
-		KidotToken: kidot_token::{Module, Call, Storage, Event<T>},
 		KidotLoan: kidot_loan::{Module, Call, Storage, Event<T>},
 	}
 );
