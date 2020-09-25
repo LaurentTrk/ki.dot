@@ -52,6 +52,8 @@ decl_storage! {
 
 decl_event!(
 	pub enum Event<T> where AccountId = <T as frame_system::Trait>::AccountId {
+		/// A loan has been added
+		LoanAdded(LoanId, AccountId),
 		/// A loan has been funded
 		LoanFunded(LoanId, AccountId, AmountLended),
 		/// A loan has been fully funded
@@ -62,6 +64,8 @@ decl_event!(
 // Errors inform users that something went wrong.
 decl_error! {
 	pub enum Error for Module<T: Trait> {
+		/// The loan already exists.
+		LoanAlreadyExists,
 		/// The loan has been already completely funded.
 		LoanAlreadyCompleted,
 		/// The lender has not enough bucks to fund.
@@ -77,7 +81,33 @@ decl_module! {
 		// Events must be initialized if they are used by the pallet.
 		fn deposit_event() = default;
 
-        // const KivaAccountId: T::AccountId = T::KivaAccountId::get();
+		/// Reset loans
+		#[weight = 10_000 + T::DbWeight::get().writes(1)]
+		pub fn reset_loan(origin) -> dispatch::DispatchResult {
+			// Checks
+			let who = ensure_root(origin)?;
+
+			let mut loans:Vec<LoanId> = Vec::new();
+			<Loans>::put(loans);
+			// TODO : reset maps
+
+			// TODO : Self::deposit_event(RawEvent::LoanAdded(loan_id, who));
+			Ok(())
+		}
+
+		/// Add a new loan
+		#[weight = 10_000 + T::DbWeight::get().writes(1)]
+		pub fn add_loan(origin, loan_id: LoanId, loan_amount: AmountLended) -> dispatch::DispatchResult {
+			// Checks
+			let who = ensure_root(origin)?;
+			// TODO
+			// ensure!(!<Loans>::contains(&loan_id), Error::<T>::LoanAlreadyExists);
+
+			Self::create_loan(loan_id, loan_amount);
+
+			// TODO : Self::deposit_event(RawEvent::LoanAdded(loan_id, who));
+			Ok(())
+		}
 
 		/// Lend some bucks to a loan
 		#[weight = 10_000 + T::DbWeight::get().writes(1)]
@@ -86,6 +116,7 @@ decl_module! {
 			let who = ensure_signed(origin)?;
 			ensure!(T::Currency::can_reserve(&who, amount.into()), Error::<T>::InsufficientBalance);
 			ensure!(!Self::loan_is_completed(loan), Error::<T>::LoanAlreadyCompleted);
+			// TODO : ensure!(<Loans>::contains(&loan), Error::<T>::LoanAlreadyExists);
 
 			T::Currency::reserve(&who, amount.into())?;
 			let lender = Lender {
@@ -105,30 +136,38 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-	fn add_lender(loan_id: LoanId, lender: Lender<T>) {
-		let mut lenders;
+
+	fn create_loan(loan_id: LoanId, loan_amount: AmountLended){
+		let mut lenders:Vec<Lender<T>> = Vec::new();
 		let mut loans;
 		let mut loan_details;
+		info!("Creating new loan for {}", loan_id);
 		if Self::get_loans().len() == 0 {
 			loans = Vec::new();
 		}else{
 			loans = Self::get_loans();
 		}
-		if Self::get_loan_lenders(loan_id).len() == 0 {
-			info!("Creating new loan for {}", loan_id);
-			lenders = Vec::new();
-			loan_details = LoanDetails {
-				loan_id: loan_id,
-				loan_amount: 50000,
-				funded_amount: 0
-			};
-			loans.push(loan_id);
-		}else{
-			info!("Adding new lender for {}", loan_id);
-			lenders = Self::get_loan_lenders(loan_id);
-			loan_details = Self::get_loan_details(loan_id)
-		}
 
+		loan_details = LoanDetails {
+			loan_id: loan_id,
+			loan_amount: loan_amount,
+			funded_amount: 0
+		};
+		loans.push(loan_id);
+		<LoansDetails>::insert(loan_id, loan_details);
+		<Loans>::put(loans);
+		<LoansLenders<T>>::insert(loan_id, lenders);
+		info!("There's now {} loans", Self::get_loans().len());
+	}
+
+	fn add_lender(loan_id: LoanId, lender: Lender<T>) {
+		let mut lenders;
+		let mut loans;
+		let mut loan_details;
+		loans = Self::get_loans();
+		info!("Adding new lender for {}", loan_id);
+		lenders = Self::get_loan_lenders(loan_id);
+		loan_details = Self::get_loan_details(loan_id);
 		loan_details.funded_amount += lender.lend_amount;
 		lenders.push(lender);
 
