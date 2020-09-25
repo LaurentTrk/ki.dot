@@ -1,7 +1,17 @@
 {
   "CUSTOM_TYPES": {
     "Address": "AccountId",
-    "LookupSource": "AccountId"
+    "LookupSource": "AccountId",
+    "SpecIndex": "Vec<u8>",
+    "RequestIdentifier": "u64",
+    "DataVersion": "u64",
+    "LoanId": "u32",
+    "AmountLended": "u32",
+    "LoanDetails": {
+      "loanId": "LoanId",
+      "loanAmount": "AmountLended",
+      "fundedAmount": "AmountLended"
+    }
   },
-  "PROVIDER_SOCKET": "ws://127.0.0.1:9944"
+  "PROVIDER_SOCKET": "ws://127.0.0.1.9944"
 }

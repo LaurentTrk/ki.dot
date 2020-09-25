@@ -1,5 +1,17 @@
 {
-  "APP_NAME": "substrate-front-end-tutorial",
+  "APP_NAME": "Ki.Dot",
   "DEVELOPMENT_KEYRING": true,
-  "RPC": {}
+  "RPC": {},
+  "PROVIDER_SOCKET": "ws://127.0.0.1:9944",
+  "CUSTOM_TYPES": {"SpecIndex": "Vec<u8>",
+    "RequestIdentifier": "u64",
+    "DataVersion": "u64",
+    "LoanId": "u32",
+    "AmountLended": "u32",
+    "LoanDetails": {
+      "loanId": "LoanId",
+      "loanAmount": "AmountLended",
+      "fundedAmount": "AmountLended"
+    }
+  }
 }
