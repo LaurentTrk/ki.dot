@@ -7,11 +7,11 @@
     "RequestIdentifier": "u64",
     "DataVersion": "u64",
     "LoanId": "u32",
-    "AmountLended": "u32",
+    "Amount": "u32",
     "LoanDetails": {
       "loanId": "LoanId",
-      "loanAmount": "AmountLended",
-      "fundedAmount": "AmountLended"
+      "loanAmount": "Amount",
+      "fundedAmount": "Amount"
     }
   }
 }
