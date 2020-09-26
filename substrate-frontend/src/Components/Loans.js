@@ -1,30 +1,27 @@
 import React, {useEffect, useState} from 'react';
-import {
-    Table,
-    Card,
-    Grid,
-    Statistic,
-    Form,
-    Input,
-    Label,
-    Icon,
-    Image,
-    Segment,
-    Flag,
-    Progress,
-    Divider,
-    Button
-} from 'semantic-ui-react';
+import {Button, Card, Divider, Flag, Image, Progress, Segment, Statistic} from 'semantic-ui-react';
 
 import {useSubstrate} from '../substrate-lib';
 import axios from "axios";
 import {TxButton} from "../substrate-lib/components";
 
-function LoanCard(props){
+const ONE_KD_UNIT = 1000;
+const NANO_DOLLAR = 100000000;
+// One Link = One KD  = 10.33921771 USD
+// KDPrice returned = 1033921771
+// So USD = (KValue / ONE_KD_UNIT) * (KDPrice / 100000000)
+const toKDUnit = (value) => Math.round(value * 100 / ONE_KD_UNIT) / 100;
+
+
+function LoanCard(props) {
     const resetRandomLoan = (status) => {
         props.setStatus(status);
         props.setRandomLoan(null);
     }
+    const fundedInDollars = props.toUSD(props.loan.fundedAmount);
+    const loanIsCompleted = fundedInDollars >= props.loan.loanAmount;
+    const cleanedDescription = props.loan.description.slice(0, 200).replace(/<|>|br|\//g,'') + '...'
+
     return <Card color={'green'} style={{width: '200px'}}>
         <Image src={props.loan.image.url} wrapped ui={false}/>
         <Card.Content>
@@ -33,27 +30,44 @@ function LoanCard(props){
                 <Flag name={props.loan.geocode.country.isoCode.toLowerCase()}/>
                 <span className='date'>{props.loan.loanAmount + ' USD'}</span>
             </Card.Meta>
-            <Card.Description>
-                {props.loan.description.slice(0, 200)}
-            </Card.Description>
+            <Card.Description>{cleanedDescription}</Card.Description>
         </Card.Content>
         <Card.Content extra>
-            <Progress progress='value' disabled={props.loan.isNew} value={props.loan.fundedAmount < props.loan.loanAmount ? props.loan.fundedAmount: props.loan.loanAmount}
+            <Progress progress={loanIsCompleted ? null : 'value'} disabled={props.loan.isNew}
+                      value={!loanIsCompleted ? fundedInDollars : props.loan.loanAmount}
                       total={props.loan.loanAmount}
-                      size='small' color={props.loan.isNew ? '':props.loan.fundedAmount < props.loan.loanAmount ? 'yellow':'green'}/>
-            { !props.loan.isNew && <TxButton
-                accountPair={props.accountPair}
-                label='Lend'
-                type='SIGNED-TX'
-                setStatus={props.setStatus}
-                attrs={{
-                    palletRpc: 'kidotLoan',
-                    callable: 'lend',
-                    inputParams: [props.loan.id, props.amountToFund],
-                    paramFields: [true, true]
-                }}
-            /> }
-            { props.loan.isNew && <TxButton
+                      size='small'
+                      color={props.loan.isNew ? '' : !loanIsCompleted ? 'yellow' : 'green'}>{loanIsCompleted ? "Funded !" : ""}</Progress>
+            {!props.loan.isNew &&
+            <Button.Group>
+                <TxButton
+                    accountPair={props.accountPair}
+                    disabled={loanIsCompleted}
+                    label='KD$ 10'
+                    type='SIGNED-TX'
+                    setStatus={props.setStatus}
+                    attrs={{
+                        palletRpc: 'kidotLoan',
+                        callable: 'lend',
+                        inputParams: [props.loan.id, 10000],
+                        paramFields: [true, true]
+                    }}
+                />
+                <TxButton
+                    accountPair={props.accountPair}
+                    disabled={loanIsCompleted}
+                    label='KD$ 50'
+                    type='SIGNED-TX'
+                    setStatus={props.setStatus}
+                    attrs={{
+                        palletRpc: 'kidotLoan',
+                        callable: 'lend',
+                        inputParams: [props.loan.id, 50000],
+                        paramFields: [true, true]
+                    }}
+                />
+            </Button.Group>}
+            {props.loan.isNew && <TxButton
                 color='red'
                 accountPair={props.accountPair}
                 label='Add'
@@ -77,12 +91,16 @@ function Main(props) {
     const [userData, setUserData] = useState({});
     const [loansDetails, setLoansDetails] = useState([]);
     const [loanToFund, setLoanToFund] = useState({});
-    const [amountToFund, setAmountToFund] = useState(100);
+    const [amountToFund, setAmountToFund] = useState(10 * ONE_KD_UNIT);
     const kivaApiUrl = "https://api.kivaws.org/graphql";
     const [KDValue, setKDValue] = useState(0); // KD$ value, indexed on LINK$
     const [status, setStatus] = useState('');
-    const [loans, setLoans] = useState([]);
+    const [reservedAmount, setReservedAmount] = useState(0);
+    const [fundedAmount, setFundedAmount] = useState(0);
+    const [payedBackAmount, setPayedBackAmount] = useState(0);
     const [randomLoan, setRandomLoan] = useState(null);
+
+    const toUSD = (value) => toKDUnit(value) * (KDValue / NANO_DOLLAR);
 
     const getRandomLoan = async () => {
         setRandomLoan(null);
@@ -110,14 +128,17 @@ function Main(props) {
         const response = await axios.post(kivaApiUrl, JSON.stringify({query: loansQuery}),
             {headers: {'Content-Type': 'application/json'}});
         console.log(response.data.data.lend.loans.values);
-        const newRandomLoan = { ...response.data.data.lend.loans.values[0], isNew: true}
+        const newRandomLoan = {...response.data.data.lend.loans.values[0], isNew: true}
         setRandomLoan(newRandomLoan);
     };
 
     const getLoanExternalDetails = async (loansIds) => {
+        if (loansIds.length == 0) {
+            return;
+        }
         const loansQuery = "{\
             lend {\
-              loans(filters: {loanIds : ["+loansIds.join()+"]}) {\
+              loans(filters: {loanIds : [" + loansIds.join() + "]}, limit: " + loansIds.length + ") {\
                 values {\
                   description\
                   id\
@@ -145,15 +166,15 @@ function Main(props) {
             loansDetailsRaw.forEach(raw => {
                 const loanId = raw.loanId.toNumber();
 
-                if (randomLoan !== null){
+                if (randomLoan !== null) {
                     console.log(loanId + "," + randomLoan.id)
-                    if (loanId === randomLoan.id){
+                    if (loanId === randomLoan.id) {
                         console.log("Resetting randomloan")
                         resetRandomNode = true
                     }
                 }
                 loansDetails.forEach(loanDetails => {
-                    if (loanDetails.id === raw.loanId.toNumber()){
+                    if (loanDetails.id === raw.loanId.toNumber()) {
                         loanDetails.fundedAmount = raw.fundedAmount.toNumber()
                         loanDetails.loanAmount = Number(loanDetails.loanAmount)
                         loanDetails.isNew = false
@@ -162,64 +183,81 @@ function Main(props) {
             })
             console.log(loansDetails)
             setLoansDetails(loansDetails);
-            if (resetRandomNode){
+            if (resetRandomNode) {
                 setRandomLoan(null)
             }
         });
-
-
-
-
-
-
-        // console.log(fullLoanDetails);
-        // let loans = loansDetails;
-        // loans.push(fullLoanDetails);
-        // console.log(loans);
-        //
-        // console.log(loansDetails)
     };
 
     useEffect(() => {
         let unsubscribe;
+        api.query.pricefeed.price(newValue => {
+            console.log(newValue.toNumber());
+            setKDValue(newValue.toNumber());
+        }).then(unsub => {
+            unsubscribe = unsub;
+        }).catch(console.error);
         api.query.kidotLoan.loans(rawDataLoans => {
             const loansIds = rawDataLoans.map(r => r.toString());
             getLoanExternalDetails(loansIds)
         }).then(unsub => {
             unsubscribe = unsub;
         }).catch(console.error);
-        api.query.pricefeed.price(newValue => {
-            // The storage value is an Option<u32>
-            // So we have to check whether it is None first
-            // There is also unwrapOr
-            console.log(newValue)
-            if (newValue.isNone) {
-                setKDValue('<None>');
-            } else {
-                try {
-                    setKDValue(Math.round(newValue.toNumber() / 1000000) / 100);
-                } catch (e) {
-                    setKDValue('NaN');
-                }
-
-            }
+        api.query.kidotLoan.reservedLoansAmount(newValue => {
+            setReservedAmount(newValue.toNumber());
         }).then(unsub => {
             unsubscribe = unsub;
-        })
-            .catch(console.error);
+        }).catch(console.error);
+        api.query.kidotLoan.fundedLoansAmount(newValue => {
+            setFundedAmount(newValue.toNumber());
+        }).then(unsub => {
+            unsubscribe = unsub;
+        }).catch(console.error);
 
 
     }, []);
 
     return (
         <Segment>
-            <h1>Loans</h1>
-                <Button basic
-                        onClick={getRandomLoan}
-                        color='red'
-                        content='Find Loan'
+            <Statistic.Group widths='four' size='small'>
+                <Statistic
+                    label={'KD$ Reserved'}
+                    value={toKDUnit(reservedAmount)}
                 />
-            {false && <TxButton
+                <Statistic
+                    label={'KD$ Funded'}
+                    value={toKDUnit(fundedAmount)}
+                />
+                <Statistic
+                    label={'KD$ Staked'}
+                    value={toKDUnit(payedBackAmount)}
+                />
+                <Statistic
+                    label={'KD$ Payed Back'}
+                    value={toKDUnit(payedBackAmount)}
+                />
+            </Statistic.Group>
+
+            <Divider hidden/>
+
+            <TxButton
+                accountPair={accountPair}
+                label={'1 KD$ = ' + (KDValue / NANO_DOLLAR).toString() + 'USD'}
+                type='SIGNED-TX'
+                setStatus={setStatus}
+                attrs={{
+                    palletRpc: 'pricefeed',
+                    callable: 'requestPrice',
+                    inputParams: ['LINK/USD'],
+                    paramFields: [true]
+                }}
+            />
+            <Button basic
+                    color='blue'
+                    onClick={getRandomLoan}
+                    content='Find Loan'
+            />
+            <TxButton
                 color='red'
                 accountPair={props.accountPair}
                 label='Reset'
@@ -227,96 +265,26 @@ function Main(props) {
                 setStatus={setStatus}
                 attrs={{
                     palletRpc: 'kidotLoan',
-                    callable: 'resetLoan',
+                    callable: 'resetLoans',
                     inputParams: [],
                     paramFields: []
                 }}
             />
-            }
+
 
             <Divider hidden/>
             <Card.Group>
                 {loansDetails && loansDetails.length > 0 && loansDetails.map(loan => {
-                    return <LoanCard loan={loan} accountPair={accountPair} setStatus={setStatus} setRandomLoan={setRandomLoan} amountToFund={amountToFund}/>
+                    return <LoanCard key={loan.id} loan={loan} accountPair={accountPair} setStatus={setStatus}
+                                     setRandomLoan={setRandomLoan} amountToFund={amountToFund}
+                                     toUSD={toUSD}/>
                 })}
-                {randomLoan != null &&  <LoanCard loan={randomLoan} accountPair={accountPair} setRandomLoan={setRandomLoan} setStatus={setStatus} amountToFund={amountToFund}/>}
+                {randomLoan != null && <LoanCard loan={randomLoan} accountPair={accountPair}
+                                                 setRandomLoan={setRandomLoan} setStatus={setStatus}
+                                                 amountToFund={amountToFund} toUSD={toUSD}/>}
             </Card.Group>
             <Divider hidden/>
-            <div style={{ overflowWrap: 'break-word' }}>{status}</div>
-
-
-
-
-            {false &&
-            <Grid.Column width={8}>
-
-                <h1>Loans List</h1>
-                {loansDetails && loansDetails.length > 0 && <Table color='blue'>
-                    <Table.Header>
-                        <Table.Row>
-                            <Table.HeaderCell>ID</Table.HeaderCell>
-                            <Table.HeaderCell>Loan Amount</Table.HeaderCell>
-                            <Table.HeaderCell>Funded</Table.HeaderCell>
-                            <Table.HeaderCell>Estimated Funded</Table.HeaderCell>
-                            <Table.HeaderCell>Still to fund</Table.HeaderCell>
-                        </Table.Row>
-                    </Table.Header>
-
-                    <Table.Body>{loansDetails.map(loanDetails => {
-                        //const id = u8aToString(loanDetails.loanId);
-                        return <Table.Row key={loanDetails.loanId}>
-                            <Table.Cell>{loanDetails.loanId.toString()}</Table.Cell>
-                            <Table.Cell>{loanDetails.loanAmount.toString() + ' USD'}</Table.Cell>
-                            <Table.Cell>{loanDetails.fundedAmount.toString() + ' KD$'}</Table.Cell>
-                            <Table.Cell>{(loanDetails.fundedAmount * KDValue).toString() + ' USD'}</Table.Cell>
-                            <Table.Cell>{(Math.round((loanDetails.loanAmount - loanDetails.fundedAmount * KDValue) / KDValue * 100) / 100).toString() + ' USD'}</Table.Cell>
-                        </Table.Row>;
-                    })}</Table.Body>
-                </Table>}
-
-                <h1>Fund Loan</h1>
-                <Form>
-                    <Form.Field>
-                        <Label basic color='teal'>
-                            <Icon name='hand point right'/>
-                            1 KD$ = 1000000000000
-                        </Label>
-                    </Form.Field>
-                    <Form.Field>
-                        <Input
-                            label='Loan ID'
-                            state='loanToFund'
-                            type='number'
-                            onChange={(_, {value}) => setLoanToFund(value)}
-                        />
-                    </Form.Field>
-                    <Form.Field>
-                        <Input
-                            label='Loan Amount (KD$)'
-                            state='amountToFund'
-                            type='number'
-                            onChange={(_, {value}) => setAmountToFund(value)}
-                        />
-                    </Form.Field>
-                    <Form.Field style={{textAlign: 'center'}}>
-                        <TxButton
-                            accountPair={accountPair}
-                            label='Fund'
-                            type='SIGNED-TX'
-                            setStatus={setStatus}
-                            attrs={{
-                                palletRpc: 'kidotLoan',
-                                callable: 'lend',
-                                inputParams: [loanToFund, amountToFund],
-                                paramFields: [true, true]
-                            }}
-                        />
-                    </Form.Field>
-                    <div style={{overflowWrap: 'break-word'}}>{status}</div>
-                </Form>
-
-
-            </Grid.Column>}
+            <div style={{overflowWrap: 'break-word'}}>{status}</div>
         </Segment>
     );
 }
