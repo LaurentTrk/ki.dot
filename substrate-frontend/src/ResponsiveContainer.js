@@ -39,14 +39,14 @@ class DesktopContainer extends Component {
                     onBottomPassedReverse={this.hideFixedMenu}
                 >
                     <Segment
-                        inverted
+                        inverted={false}
                         textAlign='center'
                         style={{ minHeight: 500, padding: '1em 0em' }}
                         vertical
                     >
                         <Menu
                             fixed={fixed ? 'top' : null}
-                            inverted={!fixed}
+                            inverted={fixed}
                             pointing={!fixed}
                             secondary={!fixed}
                             size='large'

@@ -2,7 +2,7 @@ import {Button, Container, Header, Icon, Image} from "semantic-ui-react";
 import {Link} from "react-router-dom";
 import PropTypes from "prop-types";
 import React from "react";
-import logo from './Ki.dot.png';
+import logo from './Ki.dot.black.png';
 
 const HomepageHeading = ({ mobile }) => (
     <Container text>
@@ -10,7 +10,7 @@ const HomepageHeading = ({ mobile }) => (
         <Header
             as='h2'
             content='Micro funding with a substrate based blockchain. '
-            inverted
+
             style={{
                 fontSize: mobile ? '1.5em' : '1.7em',
                 fontWeight: 'normal',
