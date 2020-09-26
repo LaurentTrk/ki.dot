@@ -126,6 +126,14 @@ function BalanceAnnotation (props) {
   const { api } = useSubstrate();
   const [accountBalance, setAccountBalance] = useState(0);
 
+  const toKD = (value) => {
+    // Grrr, cannot switch to number (overflow) and convert...
+    return value.toHuman().replace('Unit','KD$')
+        .replace('n','')
+        .replace('µ','K')
+        .replace('m','M');
+  }
+
   // When account address changes, update subscriptions
   useEffect(() => {
     let unsubscribe;
@@ -133,7 +141,7 @@ function BalanceAnnotation (props) {
     // If the user has selected an address, create a new subscription
     accountSelected &&
       api.query.system.account(accountSelected, balance => {
-        setAccountBalance(balance.data.free.toHuman().replace('Unit','KD$'));
+        setAccountBalance(toKD(balance.data.free));
       })
         .then(unsub => {
           unsubscribe = unsub;
@@ -144,7 +152,7 @@ function BalanceAnnotation (props) {
   }, [api, accountSelected]);
 
   return accountSelected ? (
-    <Label pointing='left'>
+    <Label pointing='left' style={{minWidth:'120px'}}>
       <Icon name='money bill alternate outline' color='green' />
       {accountBalance}
     </Label>

@@ -12,10 +12,18 @@ export default function Main (props) {
     const addresses = keyring.getPairs().map(account => account.address);
     let unsubscribeAll = null;
 
+    const toKD = (value) => {
+        // Grrr, cannot switch to number (overflow) and convert...
+        return value.toHuman().replace('Unit','KD$')
+            .replace('n','')
+            .replace('µ','K')
+            .replace('m','M');
+    }
+
     api.query.system.account
       .multi(addresses, balances => {
         const balancesMap = addresses.reduce((acc, address, index) => ({
-          ...acc, [address]: balances[index].data.free.toHuman()
+          ...acc, [address]: toKD(balances[index].data.free).replace('Unit','KD$')
         }), {});
         setBalances(balancesMap);
       }).then(unsub => {
