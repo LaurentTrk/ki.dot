@@ -1,4 +1,4 @@
-![](./substrate-frontend/src/Ki.dot.png)
+![](./substrate-frontend/src/Ki.dot.black.png)
 
 **Ki.Dot**, a substrate based blockchain to help micro funding
 How a blockchain could help people to find lenders for their projects ?
