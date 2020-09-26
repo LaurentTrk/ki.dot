@@ -275,6 +275,7 @@ impl chainlink::Trait for Runtime {
 impl kidot_loan::Trait for Runtime {
 	type Event = Event;
 	type Currency = Balances;
+	type PriceFeed = Pricefeed;
 }
 
 parameter_types! {

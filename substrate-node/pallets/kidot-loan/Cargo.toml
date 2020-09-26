@@ -64,6 +64,11 @@ default-features = false
 git = 'https://github.com/paritytech/substrate.git'
 tag = 'v2.0.0-rc6'
 
+[dependencies.pricefeed]
+default-features = false
+package = 'pallet-chainlink-pricefeed'
+path = '../../../pallet-chainlink-pricefeed'
+
 [features]
 default = ['std']
 std = [
@@ -72,5 +77,6 @@ std = [
     'frame-system/std',
     'sp-runtime/std',
     'sp-std/std',
+    'pricefeed/std',
     'balances/std',
 ]

@@ -6,7 +6,6 @@ use frame_support::{decl_module, decl_storage, dispatch::DispatchResult};
 use sp_std::prelude::*;
 use frame_system::{ensure_root, ensure_signed};
 use log::info;
-use frame_support::traits::Get;
 
 #[cfg(test)]
 mod mock;
@@ -14,12 +13,17 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+pub trait PriceFeeds {
+	fn latest_price() -> i128;
+}
+
 pub trait Trait: ChainlinkTrait {
 	/// Because this pallet emits events, it depends on the runtime's definition of an event.
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
 	/// We need to provide our callback to Chainlink pallet
 	type Callback: From<Call<Self>> + Into<<Self as ChainlinkTrait>::Callback>;
+
 }
 
 decl_storage! {
@@ -27,7 +31,7 @@ decl_storage! {
     	/// Store the latest price pair requested
         pub PricePair: Vec<u8>;
     	/// Store the price value received from Chainlink
-        pub Price: i128;
+        pub Price  get(fn get_price): i128;
 		/// The JobId on the Oracle which trigger calls to the Price Feed Adapter
 		pub OracleJobId: Vec<u8>;
 		/// The AccountId set in the Oracle Job Initiator
@@ -89,3 +93,11 @@ impl <T: Trait> CallbackWithParameter for Call<T> {
 		}
 	}
 }
+
+impl<T: Trait> PriceFeeds for Module<T> {
+	fn latest_price() -> i128{
+		return Self::get_price();
+	}
+}
+
+
