@@ -1,4 +1,4 @@
 FROM ubuntu
 WORKDIR /app
-COPY ./target/release/node-template /app/node-template
-CMD ["/app/node-template", "--dev", "--ws-external"]
+COPY ./target/release/kidot-substrate-node /app/kidot-substrate-node
+CMD ["/app/kidot-substrate-node", "--dev", "--ws-external"]
