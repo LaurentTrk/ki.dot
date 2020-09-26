@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode, Compact};
+use codec::{Decode, Encode};
 use frame_support::{decl_error, decl_event, decl_module, decl_storage, dispatch, ensure,
                     traits::{Currency}};
 use frame_support::traits::{BalanceStatus, ReservableCurrency};
@@ -236,9 +236,9 @@ impl<T: Trait> Module<T> {
     fn loan_is_completed(loan: LoanId) -> bool {
         let loan_details = Self::get_loan_details(loan);
         // One KD = 1000 unit
-        let fundedInUSD = (loan_details.funded_amount / 1000) * (T::PriceFeed::latest_price() as u32 / 100000000);
-        info!("Amount funded for {} = {} mKD$ = {} USD / {}", loan, loan_details.funded_amount, fundedInUSD, loan_details.loan_amount);
-        return loan_details.loan_amount > 0 && fundedInUSD >= loan_details.loan_amount;
+        let funded_in_usd = (loan_details.funded_amount / 1000) * (T::PriceFeed::latest_price() as u32 / 100000000);
+        info!("Amount funded for {} = {} mKD$ = {} USD / {}", loan, loan_details.funded_amount, funded_in_usd, loan_details.loan_amount);
+        return loan_details.loan_amount > 0 && funded_in_usd >= loan_details.loan_amount;
     }
 
 
