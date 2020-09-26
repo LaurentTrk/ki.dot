@@ -1,5 +1,11 @@
-# pricefeed-polkadot
-Bring Chainlink Price Feeds to Polkadot Substrate Chain.
+![](./substrate-frontend/src/Ki.dot.png)
+
+**Ki.Dot**, a substrate based blockchain to help micro funding
+How a blockchain could help people to find lenders for their projects ?
+
+Personal [Chainlink Hackathon](https://hack.chain.link/) project.
+
+This technical project aims to demonstrate how a substrate chain could rely on Chainlink to get Aggregated Price Feeds.
 
 * A [Chainlink External Adapter](https://docs.chain.link/docs/external-adapters) consume [Price Feeds](https://feeds.chain.link/)
 * The [Chainlink/Polkadot Bridge](https://github.com/smartcontractkit/chainlink-polkadot) call this external adapter from a substrate chain.
