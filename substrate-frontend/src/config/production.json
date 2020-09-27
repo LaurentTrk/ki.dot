@@ -10,7 +10,8 @@
     "LoanDetails": {
       "loanId": "LoanId",
       "loanAmount": "Amount",
-      "fundedAmount": "Amount"
+      "fundedAmount": "Amount",
+      "payedBackAmount": "Amount"
     }
   },
   "PROVIDER_SOCKET": "wss://kidot.ltk.codes:9944"

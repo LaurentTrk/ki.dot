@@ -11,7 +11,8 @@
     "LoanDetails": {
       "loanId": "LoanId",
       "loanAmount": "Amount",
-      "fundedAmount": "Amount"
+      "fundedAmount": "Amount",
+      "payedBackAmount": "Amount"
     }
   }
 }
