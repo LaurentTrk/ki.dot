@@ -10,7 +10,6 @@ const ONE_KD_UNIT = 1000;
 const NANO_DOLLAR = 100000000;
 const toKDUnit = (value) => Math.round(value * 100 / ONE_KD_UNIT) / 100;
 
-
 function LoanCard(props) {
     const resetRandomLoan = (status) => {
         props.setStatus(status);
@@ -99,7 +98,7 @@ function Main(props) {
     const [paidBackAmount, setPaidBackAmount] = useState(0);
     const [randomLoan, setRandomLoan] = useState(null);
 
-    const toUSD = (value) => toKDUnit(value) * (KDValue / NANO_DOLLAR);
+    const toUSD = (value) => Math.round(toKDUnit(value) * (KDValue / NANO_DOLLAR));
 
     const getRandomLoan = async () => {
         setRandomLoan(null);
@@ -222,6 +221,7 @@ function Main(props) {
 
     }, []);
 
+    const KDValueInDollars = (value) => (Math.round((KDValue / NANO_DOLLAR) * 1000) / 1000).toString() + ' USD';
     return (
         <div>
         <Segment style={{minWidth:'1086px', minHeight:'650px'}}>
@@ -236,7 +236,7 @@ function Main(props) {
 
             <TxButton
                 accountPair={accountPair}
-                label={'1 KD$ = ' + (KDValue / NANO_DOLLAR).toString() + 'USD'}
+                label={'1 KD$ = ' + KDValueInDollars(KDValue)}
                 type='SIGNED-TX'
                 setStatus={setStatus}
                 attrs={{
