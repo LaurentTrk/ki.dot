@@ -5,6 +5,8 @@ How a blockchain could help people to find lenders for their projects ?
 
 Personal [Chainlink Hackathon](https://devpost.com/software/ki-dot-a-substrate-based-blockchain-to-help-micro-funding) project.
 
+You can have a short presentation of the project in [this video](https://www.youtube.com/watch?v=uLlR4pZP9OA).
+
 ## Inspiration
 
 Blockchains promise a new world, but for the moment, they remain far removed from the real world.
@@ -14,7 +16,8 @@ For several years, I have been a donor for [Kiva](https://kiva.org) which connec
 
 The idea is to connect the borrowers' projects to a community of Blockchain users, ready to invest their cryptocurrencies :)
 
-**Disclaimer** : this project is a pure proof of concept. No money nor cryptos is spent, no project is really funded.
+**Disclaimer** : this project is a pure proof of concept. No money nor cryptocurrency is spent, no project is really funded. I am not involved in the Kiva organization, I am just a regular user.
+All credits regarding to loans details, such as pictures and story, go to the Kiva Team.
 
 ## What it does
 
