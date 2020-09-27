@@ -32,4 +32,8 @@ kubectl expose deployment kidot-chainlink-adapter --port=8080 --target-port=8080
 
 # Update the adapter version
 kubectl set image deployment kidot-chainlink-adapter substrate-adapter=laurenttrk/substrate-adapter:2.0.0-alpha.6.5
+
+# Update Ki.Dot Substrate Node and FrontEnd
+kubectl set image deploy/kidot-node kidot-node=laurenttrk/kidot-node:x.y.z
+kubectl set image deploy/kidot-frontend kidot-frontend=laurenttrk/kidot-frontend:x.y.z
 ```
