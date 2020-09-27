@@ -9,15 +9,11 @@ const Homepage = () => (
         <p className='homepage-content'>
         </p>
 
-        <Header as='h3' className='homepage-header'>Learn More</Header>
+        <Header as='h3' className='homepage-header'>This is the online demo of the Ki.Dot Chainlink Hackathon project.</Header>
+
 
         <List bulleted className='homepage-list'>
-          <List.Item content="Substrate Developer Hub" href="https://substrate.dev"/>
-          <List.Item
-            content="Element Technical Chat"
-            href="https://app.element.io/#/room/!HzySYSaIhtyWrwiwEV:matrix.org"
-          />
-          <List.Item content="Substrate Enterprise Sample" href="https://github.com/substrate-developer-hub/substrate-enterprise-sample"/>
+          <List.Item content="Hackathon Project Page" href="https://devpost.com/software/ki-dot-a-substrate-based-blockchain-to-help-micro-funding"/>
           <List.Item content="Ki.Dot Github Repository" href="https://github.com/LaurentTrk/ki.dot"/>
         </List>
       </Container>
