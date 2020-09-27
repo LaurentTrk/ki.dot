@@ -4,12 +4,10 @@ import {Button, Card, Divider, Flag, Image, Progress, Segment, Statistic} from '
 import {useSubstrate} from '../substrate-lib';
 import axios from "axios";
 import {TxButton} from "../substrate-lib/components";
+import Events from "../Events";
 
 const ONE_KD_UNIT = 1000;
 const NANO_DOLLAR = 100000000;
-// One Link = One KD  = 10.33921771 USD
-// KDPrice returned = 1033921771
-// So USD = (KValue / ONE_KD_UNIT) * (KDPrice / 100000000)
 const toKDUnit = (value) => Math.round(value * 100 / ONE_KD_UNIT) / 100;
 
 
@@ -21,7 +19,9 @@ function LoanCard(props) {
     const fundedInDollars = props.toUSD(props.loan.fundedAmount);
     const loanIsCompleted = fundedInDollars >= props.loan.loanAmount;
     const cleanedDescription = props.loan.description.slice(0, 200).replace(/<|>|br|\//g,'') + '...'
-
+    const payingBackLoan = props.loan.paidBackAmount > 0 && props.loan.paidBackAmount < props.loan.fundedAmount;
+    const paidBackLoan = loanIsCompleted && props.loan.paidBackAmount === props.loan.fundedAmount;
+    const label = paidBackLoan ? "Paid Back !" : payingBackLoan ? "Paying back..." : loanIsCompleted ? "Funded !" : "";
     return <Card color={'green'} style={{width: '200px'}}>
         <Image src={props.loan.image.url} wrapped ui={false}/>
         <Card.Content>
@@ -33,11 +33,12 @@ function LoanCard(props) {
             <Card.Description>{cleanedDescription}</Card.Description>
         </Card.Content>
         <Card.Content extra>
-            <Progress progress={loanIsCompleted ? null : 'value'} disabled={props.loan.isNew}
-                      value={!loanIsCompleted ? fundedInDollars : props.loan.loanAmount}
-                      total={props.loan.loanAmount}
+            {!props.loan.isNew && <Progress progress={loanIsCompleted ? null : 'value'} disabled={props.loan.isNew}
+                      value={payingBackLoan ? props.loan.paidBackAmount : !loanIsCompleted ? fundedInDollars : props.loan.loanAmount}
+                      active={payingBackLoan}
+                      total={payingBackLoan ? props.loan.fundedAmount : props.loan.loanAmount}
                       size='small'
-                      color={props.loan.isNew ? '' : !loanIsCompleted ? 'yellow' : 'green'}>{loanIsCompleted ? "Funded !" : ""}</Progress>
+                      color={props.loan.isNew ? '' : !loanIsCompleted ? 'yellow' : 'green'}>{label}</Progress>}
             {!props.loan.isNew &&
             <Button.Group>
                 <TxButton
@@ -49,7 +50,7 @@ function LoanCard(props) {
                     attrs={{
                         palletRpc: 'kidotLoan',
                         callable: 'lend',
-                        inputParams: [props.loan.id, 10000],
+                        inputParams: [props.loan.id, 10 * ONE_KD_UNIT],
                         paramFields: [true, true]
                     }}
                 />
@@ -62,7 +63,7 @@ function LoanCard(props) {
                     attrs={{
                         palletRpc: 'kidotLoan',
                         callable: 'lend',
-                        inputParams: [props.loan.id, 50000],
+                        inputParams: [props.loan.id, 50 * ONE_KD_UNIT],
                         paramFields: [true, true]
                     }}
                 />
@@ -88,16 +89,14 @@ function LoanCard(props) {
 function Main(props) {
     const {api} = useSubstrate();
     const {accountPair} = props;
-    const [userData, setUserData] = useState({});
     const [loansDetails, setLoansDetails] = useState([]);
-    const [loanToFund, setLoanToFund] = useState({});
-    const [amountToFund, setAmountToFund] = useState(10 * ONE_KD_UNIT);
     const kivaApiUrl = "https://api.kivaws.org/graphql";
     const [KDValue, setKDValue] = useState(0); // KD$ value, indexed on LINK$
-    const [status, setStatus] = useState('');
+    const [status, setStatus] = useState('Waiting transactions...');
     const [reservedAmount, setReservedAmount] = useState(0);
     const [fundedAmount, setFundedAmount] = useState(0);
-    const [payedBackAmount, setPayedBackAmount] = useState(0);
+    const [stakedAmount, setStakedAmount] = useState(0);
+    const [paidBackAmount, setPaidBackAmount] = useState(0);
     const [randomLoan, setRandomLoan] = useState(null);
 
     const toUSD = (value) => toKDUnit(value) * (KDValue / NANO_DOLLAR);
@@ -127,13 +126,13 @@ function Main(props) {
           }";
         const response = await axios.post(kivaApiUrl, JSON.stringify({query: loansQuery}),
             {headers: {'Content-Type': 'application/json'}});
-        console.log(response.data.data.lend.loans.values);
-        const newRandomLoan = {...response.data.data.lend.loans.values[0], isNew: true}
+        const newRandomLoan = {...response.data.data.lend.loans.values[0], isNew: true, fundedAmount: 0}
         setRandomLoan(newRandomLoan);
     };
 
     const getLoanExternalDetails = async (loansIds) => {
         if (loansIds.length == 0) {
+            setLoansDetails([]);
             return;
         }
         const loansQuery = "{\
@@ -159,7 +158,6 @@ function Main(props) {
           }";
         const response = await axios.post(kivaApiUrl, JSON.stringify({query: loansQuery}),
             {headers: {'Content-Type': 'application/json'}});
-        console.log(response)
         let loansDetails = response.data.data.lend.loans.values;
         api.query.kidotLoan.loansDetails.multi(loansIds, loansDetailsRaw => {
             let resetRandomNode = false;
@@ -167,21 +165,19 @@ function Main(props) {
                 const loanId = raw.loanId.toNumber();
 
                 if (randomLoan !== null) {
-                    console.log(loanId + "," + randomLoan.id)
                     if (loanId === randomLoan.id) {
-                        console.log("Resetting randomloan")
                         resetRandomNode = true
                     }
                 }
                 loansDetails.forEach(loanDetails => {
                     if (loanDetails.id === raw.loanId.toNumber()) {
                         loanDetails.fundedAmount = raw.fundedAmount.toNumber()
+                        loanDetails.paidBackAmount = raw.payedBackAmount.toNumber()
                         loanDetails.loanAmount = Number(loanDetails.loanAmount)
                         loanDetails.isNew = false
                     }
                 })
             })
-            console.log(loansDetails)
             setLoansDetails(loansDetails);
             if (resetRandomNode) {
                 setRandomLoan(null)
@@ -192,7 +188,6 @@ function Main(props) {
     useEffect(() => {
         let unsubscribe;
         api.query.pricefeed.price(newValue => {
-            console.log(newValue.toNumber());
             setKDValue(newValue.toNumber());
         }).then(unsub => {
             unsubscribe = unsub;
@@ -213,29 +208,28 @@ function Main(props) {
         }).then(unsub => {
             unsubscribe = unsub;
         }).catch(console.error);
-
+        api.query.kidotLoan.stakedAmount(newValue => {
+            setStakedAmount(newValue.toNumber());
+        }).then(unsub => {
+            unsubscribe = unsub;
+        }).catch(console.error);
+        api.query.kidotLoan.payedBackLoansAmount(newValue => {
+            setPaidBackAmount(newValue.toNumber());
+        }).then(unsub => {
+            unsubscribe = unsub;
+        }).catch(console.error);
+        return () => unsubscribe && unsubscribe();
 
     }, []);
 
     return (
-        <Segment>
+        <div>
+        <Segment style={{minWidth:'1086px', minHeight:'650px'}}>
             <Statistic.Group widths='four' size='small'>
-                <Statistic
-                    label={'KD$ Reserved'}
-                    value={toKDUnit(reservedAmount)}
-                />
-                <Statistic
-                    label={'KD$ Funded'}
-                    value={toKDUnit(fundedAmount)}
-                />
-                <Statistic
-                    label={'KD$ Staked'}
-                    value={toKDUnit(payedBackAmount)}
-                />
-                <Statistic
-                    label={'KD$ Payed Back'}
-                    value={toKDUnit(payedBackAmount)}
-                />
+                <Statistic label={'KD$ Reserved'}  value={toKDUnit(reservedAmount)}/>
+                <Statistic label={'KD$ Outstanding Loans'} value={toKDUnit(fundedAmount)}/>
+                <Statistic label={'KD$ Staked'} value={toKDUnit(stakedAmount)}/>
+                <Statistic label={'KD$ Paid Back'} value={toKDUnit(paidBackAmount)}/>
             </Statistic.Group>
 
             <Divider hidden/>
@@ -258,6 +252,18 @@ function Main(props) {
                     content='Find Loan'
             />
             <TxButton
+                accountPair={props.accountPair}
+                label='Payback Day !'
+                type='SIGNED-TX'
+                setStatus={setStatus}
+                attrs={{
+                    palletRpc: 'kidotLoan',
+                    callable: 'payback',
+                    inputParams: [],
+                    paramFields: []
+                }}
+            />
+            <TxButton
                 color='red'
                 accountPair={props.accountPair}
                 label='Reset'
@@ -276,16 +282,21 @@ function Main(props) {
             <Card.Group>
                 {loansDetails && loansDetails.length > 0 && loansDetails.map(loan => {
                     return <LoanCard key={loan.id} loan={loan} accountPair={accountPair} setStatus={setStatus}
-                                     setRandomLoan={setRandomLoan} amountToFund={amountToFund}
+                                     setRandomLoan={setRandomLoan}
                                      toUSD={toUSD}/>
                 })}
                 {randomLoan != null && <LoanCard loan={randomLoan} accountPair={accountPair}
                                                  setRandomLoan={setRandomLoan} setStatus={setStatus}
-                                                 amountToFund={amountToFund} toUSD={toUSD}/>}
+                                                 toUSD={toUSD}/>}
             </Card.Group>
-            <Divider hidden/>
-            <div style={{overflowWrap: 'break-word'}}>{status}</div>
         </Segment>
+        <Segment>
+            <div style={{overflowWrap: 'break-word'}}>{status}</div>
+            <Divider hidden/>
+            <Events />
+        </Segment>
+
+        </div>
     );
 }
 
